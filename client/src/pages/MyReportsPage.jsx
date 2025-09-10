@@ -66,7 +66,7 @@ const MyReportsPage = () => {
       {myIssues.length > 0 ? (
         <div className="issues-grid">
           {myIssues.map(issue => (
-            <IssueCard key={issue._id} issue={issue} />
+            <IssueCard key={issue.id} issue={issue} />
           ))}
         </div>
       ) : (
