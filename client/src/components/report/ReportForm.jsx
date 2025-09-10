@@ -102,6 +102,6 @@ const ReportForm = () => {
       </div>
     </div>
   );
-};
+}; 
 
-export default ReportForm;
+export default ReportForm; 
