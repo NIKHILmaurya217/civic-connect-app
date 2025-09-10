@@ -14,6 +14,10 @@ const storage = admin.storage().bucket();
 
 // --- 1. v1 HTTPS Function for Twilio Webhook (WhatsApp Chatbot) ---
 exports.whatsAppWebhook = functions.https.onRequest(async (request, response) => {
+  // Get Twilio credentials from secure config
+  const accountSid = functions.config().twilio.account_sid;
+  const authToken = functions.config().twilio.auth_token;
+
   const twiml = new twilio.twiml.MessagingResponse();
   const incomingMsg = request.body.Body.toLowerCase().trim();
   const fromNumber = request.body.From;
@@ -39,8 +43,18 @@ exports.whatsAppWebhook = functions.https.onRequest(async (request, response) =>
     const mediaUrl = request.body.MediaUrl0;
     if (mediaUrl) {
       try {
-        const imageResponse = await axios({ method: 'get', url: mediaUrl, responseType: 'arraybuffer' });
-        const fileExtension = request.body.MediaContentType0.split('/')[1];
+        // Authenticate with Twilio to download the image
+        const imageResponse = await axios({
+          method: 'get',
+          url: mediaUrl,
+          responseType: 'arraybuffer',
+          auth: { // <-- The critical authentication fix
+            username: accountSid,
+            password: authToken
+          }
+        });
+        
+        const fileExtension = request.body.MediaContentType0.split('/')[1] || 'jpg';
         const fileName = `issue-images/whatsapp_${uuidv4()}.${fileExtension}`;
         const file = storage.file(fileName);
         await file.save(imageResponse.data);
@@ -60,7 +74,6 @@ exports.whatsAppWebhook = functions.https.onRequest(async (request, response) =>
   else if (sessionData.state === "awaiting_location") {
     const lat = request.body.Latitude;
     const lon = request.body.Longitude;
-
     if (lat && lon) {
       try {
         const finalReport = {
@@ -74,13 +87,9 @@ exports.whatsAppWebhook = functions.https.onRequest(async (request, response) =>
           createdAt: admin.firestore.FieldValue.serverTimestamp(),
           location: {
             address: `WhatsApp Location (${lat}, ${lon})`,
-            geo: {
-              type: 'Point',
-              coordinates: [parseFloat(lon), parseFloat(lat)]
-            }
+            geo: { type: 'Point', coordinates: [parseFloat(lon), parseFloat(lat)] }
           }
         };
-
         await db.collection('issues').add(finalReport);
         message = "Thank you! Your report has been submitted successfully. You can view its status in the Civic Connect app.";
         await sessionRef.delete();
@@ -90,7 +99,7 @@ exports.whatsAppWebhook = functions.https.onRequest(async (request, response) =>
         await sessionRef.delete();
       }
     } else {
-      message = "Please share your location using the attachment pin and selecting 'Location'.";
+      message = "Please share your location using the attachment pin (📎) and selecting 'Location'.";
     }
   }
   else {
