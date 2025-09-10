@@ -31,7 +31,7 @@ const HomePage = () => {
     <div className="container">
       {/* Hero Section */}
       <div className="hero-section">
-        <h2 className="hero-title">Make Your City Better</h2>
+        <h2 className="hero-title">Welcome to the Civic Connect Platform!</h2>
         <p className="hero-subtitle">Report civic issues, track progress, and help build a better community.</p>
         <button onClick={() => navigate('/report')} className="hero-button">
           Report an Issue
