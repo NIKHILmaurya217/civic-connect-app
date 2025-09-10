@@ -13,7 +13,6 @@ import { useApp } from './contexts/AppContext';
 import { RefreshCw } from 'lucide-react';
 
 function App() {
-  // We no longer need isOnline here, as it's unreliable.
   const { isSyncing, pendingReports } = useApp();
 
   return (
@@ -32,8 +31,6 @@ function App() {
           </Routes>
         </main>
 
-        {/* --- MODIFIED STATUS FOOTER LOGIC --- */}
-        {/* It now only shows if syncing is happening or if reports are pending */}
         {(isSyncing || (pendingReports && pendingReports.length > 0)) && (
           <div className="status-footer">
             <div className="status-footer-content">
