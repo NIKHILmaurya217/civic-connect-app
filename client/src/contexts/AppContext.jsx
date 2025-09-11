@@ -1,46 +1,47 @@
-// src/contexts/AppContext.jsx
-import React, { useState, useEffect, createContext, useContext } from 'react';
+import React, { useState, useEffect, createContext, useContext, useCallback } from 'react';
 import { issueService } from '../services/issueService';
 import { onAuthStateChanged } from 'firebase/auth';
-import { auth, db } from '../firebase-config'; // Import db from firebase-config
-import { collection, query, orderBy, onSnapshot } from 'firebase/firestore'; // Import onSnapshot
+import { auth, db } from '../firebase-config';
+import { collection, query, orderBy, onSnapshot } from 'firebase/firestore';
 
 const AppContext = createContext();
 
 export const AppProvider = ({ children }) => {
-  // --- AUTHENTICATION STATE ---
+  // --- STATE MANAGEMENT ---
   const [user, setUser] = useState(null);
   const [loadingUser, setLoadingUser] = useState(true);
-
-  // --- ISSUE DATA STATE ---
   const [issues, setIssues] = useState([]);
   const [loadingIssues, setLoadingIssues] = useState(true);
   const [error, setError] = useState(null);
-  
-  // ... (keep the offline state if you wish to maintain that logic)
+  const [allUsers, setAllUsers] = useState({});
 
-  // This useEffect listens for login/logout events from Firebase
+  // --- AUTHENTICATION LISTENER ---
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser ? { uid: currentUser.uid, email: currentUser.email, points: 150 } : null);
+      if (currentUser) {
+        setUser({
+          uid: currentUser.uid,
+          email: currentUser.email,
+          points: 150 // Placeholder points
+        });
+      } else {
+        setUser(null);
+      }
       setLoadingUser(false);
     });
-    return () => unsubscribe(); // Cleanup on unmount
+    return () => unsubscribe();
   }, []);
-  
-  // This new useEffect sets up the REAL-TIME listener for issues
-  useEffect(() => {
-    setLoadingIssues(true);
-    const issuesCollectionRef = collection(db, 'issues');
-    const q = query(issuesCollectionRef, orderBy('createdAt', 'desc'));
 
-    // onSnapshot creates a real-time listener
-    const unsubscribe = onSnapshot(q, (snapshot) => {
+  // --- REAL-TIME DATA LISTENERS ---
+  useEffect(() => {
+    // Listener for all issues
+    const issuesCollectionRef = collection(db, 'issues');
+    const qIssues = query(issuesCollectionRef, orderBy('createdAt', 'desc'));
+    const unsubscribeIssues = onSnapshot(qIssues, (snapshot) => {
       const issuesList = snapshot.docs.map(doc => ({
         ...doc.data(),
         id: doc.id,
-        // Convert Firestore Timestamp to JS Date object
-        reportedAt: doc.data().createdAt ? doc.data().createdAt.toDate() : new Date(),
+        reportedAt: doc.data().createdAt?.toDate() || new Date(),
       }));
       setIssues(issuesList);
       setLoadingIssues(false);
@@ -51,36 +52,48 @@ export const AppProvider = ({ children }) => {
       setLoadingIssues(false);
     });
 
-    // Return the unsubscribe function to clean up the listener when the component unmounts
-    return () => unsubscribe();
+    // Listener for all users (to display emails on cards)
+    const usersCollectionRef = collection(db, 'users');
+    const unsubscribeUsers = onSnapshot(usersCollectionRef, (snapshot) => {
+      const usersMap = {};
+      snapshot.docs.forEach(doc => {
+        usersMap[doc.id] = doc.data();
+      });
+      setAllUsers(usersMap);
+    });
+
+    // Cleanup listeners on unmount
+    return () => {
+      unsubscribeIssues();
+      unsubscribeUsers();
+    };
   }, []);
 
-  // The addReport function now just calls the service.
-  // The real-time listener will automatically update the UI.
+  // --- FUNCTIONS ---
   const addReport = async (reportData) => {
-    // The service now handles all logic for image upload and DB writing
     await issueService.createIssue(reportData);
-    // No need to call setIssues() here anymore!
     awardPoints(10, 'New Report Submitted');
   };
   
   const awardPoints = (points, reason) => {
     if (user) {
-      setUser(prev => ({...prev, points: prev.points + points }));
-      // In a real app, you would update the user's points in your Firestore 'users' collection here
+      setUser(prev => ({...prev, points: (prev.points || 0) + points }));
+      // In a real app, you would also update the user's points in Firestore here
     }
   };
-
+  
+  // --- CONTEXT VALUE ---
   const value = { 
     user,
     issues,
-    loading: loadingIssues,
+    allUsers,
+    loading: loadingIssues || loadingUser, // App is loading if either is true
     error,
     addReport,
-    awardPoints,
-    // Note: The admin and upvoting logic will need to be rewritten for Firestore
+    awardPoints 
   };
 
+  // Show a single loading screen until authentication is checked
   if (loadingUser) {
     return <div style={{display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh'}}>Loading Application...</div>;
   }

@@ -33,18 +33,7 @@ function App() {
 
         {(isSyncing || (pendingReports && pendingReports.length > 0)) && (
           <div className="status-footer">
-            <div className="status-footer-content">
-              {isSyncing ? (
-                <div className="status-item">
-                  <RefreshCw className="w-5 h-5 animate-spin" />
-                  <span className="font-medium">Syncing {pendingReports.length} reports...</span>
-                </div>
-              ) : (
-                <span className="pending-badge">
-                  {pendingReports.length} reports are saved locally and will be sent when you're next online.
-                </span>
-              )}
-            </div>
+            {/* Status footer content here */}
           </div>
         )}
       </div>

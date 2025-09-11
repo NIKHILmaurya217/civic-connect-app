@@ -1,5 +1,16 @@
 import { db, storage } from '../firebase-config';
-import { collection, getDocs, addDoc, serverTimestamp, query, orderBy, doc, updateDoc, increment, where } from 'firebase/firestore';
+import {
+  collection,
+  getDocs,
+  addDoc,
+  serverTimestamp,
+  query,
+  orderBy,
+  doc,
+  updateDoc,
+  increment,
+  where
+} from 'firebase/firestore';
 import { getFunctions, httpsCallable } from 'firebase/functions';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { v4 as uuidv4 } from 'uuid';
