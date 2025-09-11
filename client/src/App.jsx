@@ -10,6 +10,7 @@ import SignupPage from './pages/SignupPage';
 import AdminPage from './pages/AdminPage';
 import MyReportsPage from './pages/MyReportsPage';
 import { useApp } from './contexts/AppContext';
+import { RefreshCw } from 'lucide-react';
 
 function App() {
   const { isSyncing, pendingReports } = useApp();
@@ -29,6 +30,24 @@ function App() {
             <Route path="/admin" element={<AdminPage />} />
           </Routes>
         </main>
+
+        {/* This footer now only appears when syncing or when reports are pending */}
+        {(isSyncing || (pendingReports && pendingReports.length > 0)) && (
+          <div className="status-footer">
+            <div className="status-footer-content">
+              {isSyncing ? (
+                <div className="status-item">
+                  <RefreshCw className="w-5 h-5 animate-spin" />
+                  <span className="font-medium">Syncing {pendingReports.length} reports...</span>
+                </div>
+              ) : (
+                <span className="pending-badge">
+                  {pendingReports.length} reports are saved locally and will be sent when you're next online.
+                </span>
+              )}
+            </div>
+          </div>
+        )}
       </div>
       <Toaster position="top-center" />
     </>

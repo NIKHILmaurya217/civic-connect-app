@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import { signInWithEmailAndPassword } from 'firebase/auth'; // 1. Import Firebase function
+import { signInWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth';
 import { auth } from '../firebase-config';
 import toast from 'react-hot-toast';
 
@@ -10,20 +10,29 @@ const LoginPage = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  // 2. Update the handleSubmit function
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     try {
-      // This signs the user in with Firebase
       await signInWithEmailAndPassword(auth, email, password);
       toast.success('Logged in successfully!');
-      navigate('/'); // Redirect to homepage on success
+      navigate('/');
     } catch (error) {
-      console.error('Error logging in:', error);
       toast.error('Failed to login. Please check your credentials.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handlePasswordReset = async () => {
+    if (!email) {
+      return toast.error("Please enter your email address in the email field first.");
+    }
+    try {
+      await sendPasswordResetEmail(auth, email);
+      toast.success("Password reset email sent! Please check your inbox and spam folder.");
+    } catch (error) {
+      toast.error(error.message);
     }
   };
 
@@ -53,6 +62,16 @@ const LoginPage = () => {
               className="form-input"
               placeholder="••••••••"
             />
+          </div>
+          <div className="text-right text-sm">
+            <button 
+              type="button" 
+              onClick={handlePasswordReset} 
+              className="text-blue-600 hover:underline"
+              style={{background: 'none', border: 'none', cursor: 'pointer', padding: 0}}
+            >
+              Forgot Password?
+            </button>
           </div>
           <button type="submit" className="button-primary w-full" disabled={loading}>
             {loading ? 'Logging in...' : 'Login'}

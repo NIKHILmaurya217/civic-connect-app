@@ -1,22 +1,24 @@
-// src/pages/AdminPage.jsx
 import React from 'react';
 import { useApp } from '../contexts/AppContext';
 import { NavLink } from 'react-router-dom';
-import { issueService } from '../services/issueService';
-import toast from 'react-hot-toast';
+import { issueService } from '../services/issueService'; // <-- Import the service
+import toast from 'react-hot-toast'; // <-- Import toast for notifications
 import AnalyticsChart from '../components/admin/AnalyticsChart';
 
 const AdminPage = () => {
   const { issues, user, loading } = useApp();
   const adminEmail = import.meta.env.VITE_ADMIN_EMAIL;
 
+  // This function now calls the service to update the status in the database
   const handleStatusChange = async (issueId, newStatus) => {
     const promise = issueService.updateIssueStatus(issueId, newStatus);
+    
     toast.promise(promise, {
       loading: 'Updating status...',
       success: 'Status updated successfully!',
       error: 'Failed to update status.',
     });
+    // Because you are using a real-time listener, the UI will update automatically!
   };
   
   if (!user || user.email !== adminEmail) {

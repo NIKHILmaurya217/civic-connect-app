@@ -1,3 +1,4 @@
+// src/components/common/IssueCard.jsx
 import React from 'react';
 import { useApp } from '../../contexts/AppContext';
 import { issueService } from '../../services/issueService';
@@ -6,10 +7,11 @@ import { MapPin, User, Star, CheckCircle, BrainCircuit } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 const IssueCard = ({ issue }) => {
-  const { user } = useApp();
+  const { user, allUsers } = useApp();
   const navigate = useNavigate();
   
   const hasUpvoted = user && issue.upvotedBy && issue.upvotedBy.includes(user.uid);
+  const reporter = allUsers[issue.reportedBy];
 
   const handleUpvote = async () => {
     if (!user) {
@@ -53,7 +55,7 @@ const IssueCard = ({ issue }) => {
         <p className="card-description">{issue.description}</p>
         <div className="card-meta">
           <div className="meta-item"><MapPin className="w-4 h-4" /><span>{issue.location?.address}</span></div>
-          <div className="meta-item"><User className="w-4 h-4" /><span>{issue.reportedBy?.substring(0, 6) || 'N/A'}...</span></div>
+          <div className="meta-item"><User className="w-4 h-4" /><span>{reporter ? reporter.email : 'Anonymous'}</span></div>
         </div>
       </div>
       <div className="card-footer">
@@ -73,7 +75,6 @@ const IssueCard = ({ issue }) => {
         </div>
       </div>
 
-      {/* --- ADD THIS NEW SECTION FOR AI LABELS --- */}
       {issue.aiLabels && issue.aiLabels.length > 0 && (
         <div className="ai-footer">
           <div className="flex items-center gap-2 text-purple-600">
