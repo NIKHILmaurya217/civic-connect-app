@@ -1,4 +1,3 @@
-// src/components/common/IssueCard.jsx
 import React from 'react';
 import { useApp } from '../../contexts/AppContext';
 import { issueService } from '../../services/issueService';
@@ -22,12 +21,10 @@ const IssueCard = ({ issue }) => {
       toast.error("You've already upvoted this issue.");
       return;
     }
-
     try {
       await issueService.upvoteIssue(issue.id);
       toast.success("Issue upvoted!");
     } catch (error) {
-      console.error("Failed to upvote:", error);
       toast.error(error.message || "Failed to upvote issue.");
     }
   };
@@ -54,8 +51,15 @@ const IssueCard = ({ issue }) => {
       <div className="card-body">
         <p className="card-description">{issue.description}</p>
         <div className="card-meta">
-          <div className="meta-item"><MapPin className="w-4 h-4" /><span>{issue.location?.address}</span></div>
-          <div className="meta-item"><User className="w-4 h-4" /><span>{reporter ? reporter.email : 'Anonymous'}</span></div>
+          <div className="meta-item">
+            <MapPin className="w-4 h-4" />
+            {/* This line displays the location address */}
+            <span>{issue.location?.address || 'No location provided'}</span>
+          </div>
+          <div className="meta-item">
+            <User className="w-4 h-4" />
+            <span>{reporter ? reporter.email : 'Anonymous'}</span>
+          </div>
         </div>
       </div>
       <div className="card-footer">
@@ -68,13 +72,11 @@ const IssueCard = ({ issue }) => {
             <Star className="w-4 h-4" fill={hasUpvoted ? 'currentColor' : 'none'} />
             <span>{issue.upvotes}</span>
           </button>
-          {issue.verified && <div className="verified-badge"><CheckCircle className="w-4 h-4" /><span>Verified</span></div>}
         </div>
         <div className="text-xs text-gray-500">
           {issue.reportedAt ? issue.reportedAt.toLocaleDateString() : 'N/A'}
         </div>
       </div>
-
       {issue.aiLabels && issue.aiLabels.length > 0 && (
         <div className="ai-footer">
           <div className="flex items-center gap-2 text-purple-600">

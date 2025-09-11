@@ -31,7 +31,7 @@ function App() {
           </Routes>
         </main>
 
-        {/* This footer now only appears when syncing or when reports are pending */}
+        {/* This footer now only appears when syncing or when reports are pending
         {(isSyncing || (pendingReports && pendingReports.length > 0)) && (
           <div className="status-footer">
             <div className="status-footer-content">
@@ -47,7 +47,7 @@ function App() {
               )}
             </div>
           </div>
-        )}
+        )} */}
       </div>
       <Toaster position="top-center" />
     </>
