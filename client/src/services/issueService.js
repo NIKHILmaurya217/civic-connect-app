@@ -116,4 +116,14 @@ export const issueService = {
     const result = await upvoteIssueCallable({ issueId: issueId });
     return result.data;
   },
+
+  /**
+   * Fetches leaderboard data from a cloud function.
+   * @returns {Promise<Array>} A promise that resolves to an array of top users.
+   */
+  getLeaderboard: async () => {
+    const getLeaderboardCallable = httpsCallable(functions, 'getLeaderboard');
+    const result = await getLeaderboardCallable();
+    return result.data;
+  },
 };

@@ -10,7 +10,6 @@ import SignupPage from './pages/SignupPage';
 import AdminPage from './pages/AdminPage';
 import MyReportsPage from './pages/MyReportsPage';
 import { useApp } from './contexts/AppContext';
-import { RefreshCw } from 'lucide-react';
 
 function App() {
   const { isSyncing, pendingReports } = useApp();
@@ -30,12 +29,6 @@ function App() {
             <Route path="/admin" element={<AdminPage />} />
           </Routes>
         </main>
-
-        {(isSyncing || (pendingReports && pendingReports.length > 0)) && (
-          <div className="status-footer">
-            {/* Status footer content here */}
-          </div>
-        )}
       </div>
       <Toaster position="top-center" />
     </>

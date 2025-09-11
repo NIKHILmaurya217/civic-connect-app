@@ -32,13 +32,13 @@ exports.whatsAppWebhook = functions.https.onRequest(async (request, response) =>
     sessionData = { state: "awaiting_description", report: {} };
     message = "Welcome to Civic Connect! Please describe the issue you want to report.";
     await sessionRef.set(sessionData);
-  } 
+  }
   else if (sessionData.state === "awaiting_description") {
     sessionData.report.description = request.body.Body;
     sessionData.state = "awaiting_photo";
     message = "Thank you. Now, please send a photo of the issue.";
     await sessionRef.set(sessionData);
-  } 
+  }
   else if (sessionData.state === "awaiting_photo") {
     const mediaUrl = request.body.MediaUrl0;
     if (mediaUrl) {
@@ -48,7 +48,7 @@ exports.whatsAppWebhook = functions.https.onRequest(async (request, response) =>
           method: 'get',
           url: mediaUrl,
           responseType: 'arraybuffer',
-          auth: { // <-- The critical authentication fix
+          auth: {
             username: accountSid,
             password: authToken
           }
@@ -183,4 +183,23 @@ exports.upvoteIssue = functions.https.onCall(async (data, context) => {
     console.error("Upvote failed:", error);
     throw error;
   }
+});
+
+// --- 4. v1 Auth Trigger to Create User Documents ---
+exports.createUserDocument = functions.auth.user().onCreate((user) => {
+  const { email, uid } = user;
+  
+  return db.collection('users').doc(uid).set({
+    email: email,
+    points: 0,
+    createdAt: admin.firestore.FieldValue.serverTimestamp(),
+  })
+  .then(() => {
+    console.log(`User document created for ${email} with UID ${uid}`);
+    return null;
+  })
+  .catch((error) => {
+    console.error(`Error creating user document for ${email}:`, error);
+    return null;
+  });
 });

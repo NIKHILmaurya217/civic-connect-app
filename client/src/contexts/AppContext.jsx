@@ -1,4 +1,4 @@
-import React, { useState, useEffect, createContext, useContext, useCallback } from 'react';
+import React, { useState, useEffect, createContext, useContext } from 'react';
 import { issueService } from '../services/issueService';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth, db } from '../firebase-config';
@@ -7,42 +7,40 @@ import { collection, query, orderBy, onSnapshot } from 'firebase/firestore';
 const AppContext = createContext();
 
 export const AppProvider = ({ children }) => {
-  // --- STATE MANAGEMENT ---
   const [user, setUser] = useState(null);
   const [loadingUser, setLoadingUser] = useState(true);
   const [issues, setIssues] = useState([]);
   const [loadingIssues, setLoadingIssues] = useState(true);
   const [error, setError] = useState(null);
   const [allUsers, setAllUsers] = useState({});
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [pendingReports, setPendingReports] = useState(() => {
+    return JSON.parse(localStorage.getItem('pendingReports')) || [];
+  });
 
-  // --- AUTHENTICATION LISTENER ---
+  // Authentication listener
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      if (currentUser) {
-        setUser({
-          uid: currentUser.uid,
-          email: currentUser.email,
-          points: 150 // Placeholder points
-        });
-      } else {
-        setUser(null);
-      }
+      setUser(currentUser ? { uid: currentUser.uid, email: currentUser.email } : null);
       setLoadingUser(false);
     });
     return () => unsubscribe();
   }, []);
 
-  // --- REAL-TIME DATA LISTENERS ---
+  // Sync user profile data from Firestore
+  useEffect(() => {
+    if (user && allUsers[user.uid]) {
+      setUser(prevUser => ({ ...prevUser, points: allUsers[user.uid].points }));
+    }
+  }, [user?.uid, allUsers]);
+
+  // Real-time data listeners
   useEffect(() => {
     // Listener for all issues
     const issuesCollectionRef = collection(db, 'issues');
     const qIssues = query(issuesCollectionRef, orderBy('createdAt', 'desc'));
     const unsubscribeIssues = onSnapshot(qIssues, (snapshot) => {
-      const issuesList = snapshot.docs.map(doc => ({
-        ...doc.data(),
-        id: doc.id,
-        reportedAt: doc.data().createdAt?.toDate() || new Date(),
-      }));
+      const issuesList = snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id, reportedAt: doc.data().createdAt?.toDate() || new Date() }));
       setIssues(issuesList);
       setLoadingIssues(false);
       setError(null);
@@ -52,48 +50,64 @@ export const AppProvider = ({ children }) => {
       setLoadingIssues(false);
     });
 
-    // Listener for all users (to display emails on cards)
+    // Listener for all users
     const usersCollectionRef = collection(db, 'users');
     const unsubscribeUsers = onSnapshot(usersCollectionRef, (snapshot) => {
       const usersMap = {};
-      snapshot.docs.forEach(doc => {
-        usersMap[doc.id] = doc.data();
-      });
+      snapshot.docs.forEach(doc => { usersMap[doc.id] = doc.data(); });
       setAllUsers(usersMap);
     });
 
-    // Cleanup listeners on unmount
+    // Listeners for online/offline status
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
     return () => {
       unsubscribeIssues();
       unsubscribeUsers();
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
     };
   }, []);
-
-  // --- FUNCTIONS ---
-  const addReport = async (reportData) => {
-    await issueService.createIssue(reportData);
-    awardPoints(10, 'New Report Submitted');
+  
+  const addReport = async (reportData, isOffline = false) => {
+    if (isOffline) {
+        const newPending = [...pendingReports, reportData];
+        setPendingReports(newPending);
+        localStorage.setItem('pendingReports', JSON.stringify(newPending));
+        return reportData;
+    }
+    try {
+      await issueService.createIssue(reportData);
+      awardPoints(10, 'New Report Submitted');
+    } catch (err) {
+      console.error("Failed to submit report:", err);
+      addReport(reportData, true); // Save offline if online submission fails
+      throw err;
+    }
   };
   
   const awardPoints = (points, reason) => {
     if (user) {
       setUser(prev => ({...prev, points: (prev.points || 0) + points }));
-      // In a real app, you would also update the user's points in Firestore here
     }
   };
-  
-  // --- CONTEXT VALUE ---
+
   const value = { 
     user,
     issues,
     allUsers,
-    loading: loadingIssues || loadingUser, // App is loading if either is true
+    setIssues,
+    loading: loadingIssues || loadingUser,
     error,
-    addReport,
+    isOnline, // isOnline is now correctly defined and provided
+    pendingReports,
+    addReport, // addReport is now correctly defined and provided
     awardPoints 
   };
 
-  // Show a single loading screen until authentication is checked
   if (loadingUser) {
     return <div style={{display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh'}}>Loading Application...</div>;
   }
