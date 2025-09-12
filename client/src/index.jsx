@@ -1,11 +1,15 @@
+// src/index.jsx
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
-import './index.css';
 import App from './App';
-import { AppProvider } from './contexts/AppContext'; // Assuming you have AppContext
-import reportWebVitals from './reportWebVitals';
-import './styles/App.css'; // Or './App.css' depending on your file location
+import { AppProvider } from './contexts/AppContext';
+
+// ✅ If App.css is in src/
+//import './App.css';
+
+// ✅ OR, if it’s in src/styles/
+import './styles/App.css';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(
@@ -17,5 +21,3 @@ root.render(
     </BrowserRouter>
   </React.StrictMode>
 );
-
-reportWebVitals();
