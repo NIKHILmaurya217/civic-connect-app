@@ -35,7 +35,7 @@ This is a full-stack web application built for the SIH 2025 problem statement fr
 
 1.  **Clone the repository:**
     ```bash
-    git clone <your-repo-url>
+    git clone https://github.com/NIKHILmaurya217/civic-connect-app.git
     cd civic-connect-app
     ```
 
