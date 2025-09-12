@@ -29,7 +29,7 @@ const Header = () => {
       <div className="header-content">
         <div className="header-brand">
           <h1 className="header-title">नागरिक सेवा</h1>
-          <span className="header-subtitle">Civic Connect</span>
+          <span className="header-subtitle">CIVIC CONNECT</span>
         </div>
         
         <nav className="header-nav-desktop">
@@ -119,9 +119,9 @@ export default Header;
 //   // Mock data for demonstration - replace with your actual context/props
 //   const user = { 
 //     email: 'user@example.com', 
-//     points: 1250,
-//     name: 'राज शर्मा',
-//     avatar: 'RS'
+//     points: 0,
+//     name: 'Nikhil maurya',
+//     avatar: 'NM'
 //   };
 //   const adminEmail = 'admin@example.com';
   
